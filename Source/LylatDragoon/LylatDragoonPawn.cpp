@@ -3,6 +3,12 @@
 #include "LylatDragoon.h"
 #include "LylatDragoonPawn.h"
 
+#include "LylatDragoonLevelCourse.h"
+#include "LylatDragoonPlayerController.h"
+
+#include "EngineUtils.h"
+#include "DrawDebugHelpers.h"
+
 ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer)
 {
@@ -37,30 +43,86 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 
 	// Set handling parameters
 	Acceleration = 500.f;
-	TurnSpeed = 50.f;
+	PlayerMovementSpeed = 50.f;
 	MaxSpeed = 4000.f;
 	MinSpeed = 500.f;
 	CurrentForwardSpeed = 500.f;
+
+	PlayerInputLocation = FVector(0.0f, 0.0f, 0.0f);
+	PreviousLevelCourseLocation = FVector(0.0f, 0.0f, 0.0f);
 }
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
 {
-	const FVector LocalMove = FVector(CurrentForwardSpeed * DeltaSeconds, 0.f, 0.f);
+	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
+	if (LevelCourse && LylatController)
+	{
+		// Calculate the movement direction and rotation quaternion
+		MovementDirection = LevelCourse->GetActorLocation() - PreviousLevelCourseLocation;
+		FQuat RelativeMovementQuat = MovementDirection.Rotation().Quaternion();
 
-	// Move plan forwards (with sweep so we stop when we collide with things)
-	AddActorLocalOffset(LocalMove, true);
+		// Calculate the recovery movement of the aim point
+		FVector PawnToAimPoint = (AimPointLocation - GetActorLocation());
+		if (!MovementDirection.GetSafeNormal().Equals(PawnToAimPoint.GetSafeNormal(), AimPointRecoveryTolerance) && !MovementInputPressed)
+		{
+			AimPointInputLocation = FMath::VInterpTo(AimPointInputLocation, FVector::ZeroVector, DeltaSeconds, AimPointRecoverySpeed);
+		}
 
-	// Calculate change in rotation this frame
-	FRotator DeltaRotation(0,0,0);
-	DeltaRotation.Pitch = CurrentPitchSpeed * DeltaSeconds;
-	DeltaRotation.Yaw = CurrentYawSpeed * DeltaSeconds;
-	DeltaRotation.Roll = CurrentRollSpeed * DeltaSeconds;
+		// Calculate the aim point and its position according to player input
+		FVector FixedAimPointLocation = LevelCourse->GetActorLocation() + (MovementDirection.GetSafeNormal() * AimPointDistance);
+		FVector LocalAimOffset = RelativeMovementQuat.RotateVector(AimPointInputLocation);
+		AimPointLocation = FixedAimPointLocation + LocalAimOffset;
+		LylatController->SnapToViewFrustum(AimPointLocation, &AimPointLocation);
 
-	// Rotate plane
-	AddActorLocalRotation(DeltaRotation);
+		// Calculate the ship position according to player input
+		PlayerLocation = LevelCourse->GetActorLocation();
+		FVector LocalActorOffset = RelativeMovementQuat.RotateVector(PlayerInputLocation);
+		PlayerLocation += LocalActorOffset;
+		LylatController->SnapToViewFrustum(PlayerLocation, &PlayerLocation);
+
+		// Calculate the ship rotation
+		FRotator FinalRotation = PawnToAimPoint.Rotation();
+		FinalRotation.Roll = 0.0f;
+		
+		// Set ship rotation and location
+		SetActorLocation(PlayerLocation);
+		SetActorRotation(FinalRotation);
+
+		// Set level course rotation
+		LevelCourse->SetActorRotation(MovementDirection.Rotation());
+
+		// Set current level course position to use it in next frame
+		PreviousLevelCourseLocation = LevelCourse->GetActorLocation();
+	}
+
+	MovementInputPressed = false;
 
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
+}
+
+void ALylatDragoonPawn::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	for (TActorIterator<ALylatDragoonLevelCourse> LCItr(GetWorld()); LCItr; ++LCItr)
+	{
+		LevelCourse = *LCItr;
+		break;
+	}
+
+	if (LevelCourse)
+	{
+		SetActorLocation(LevelCourse->GetActorLocation());
+		SetActorRotation(LevelCourse->GetActorRotation());
+
+		SpringArm->AttachTo(LevelCourse->GetRootComponent());
+	}
+}
+
+FVector ALylatDragoonPawn::GetAimPointLocation()
+{
+	return AimPointLocation;
 }
 
 void ALylatDragoonPawn::ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
@@ -77,7 +139,7 @@ void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputCo
 	check(InputComponent);
 
 	// Bind our control axis' to callback functions
-	InputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
+	//InputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
 	InputComponent->BindAxis("MoveUp", this, &ALylatDragoonPawn::MoveUpInput);
 	InputComponent->BindAxis("MoveRight", this, &ALylatDragoonPawn::MoveRightInput);
 }
@@ -96,31 +158,54 @@ void ALylatDragoonPawn::ThrustInput(float Val)
 
 void ALylatDragoonPawn::MoveUpInput(float Val)
 {
-	// Target pitch speed is based in input
-	float TargetPitchSpeed = (Val * TurnSpeed * -1.f);
+	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
+	if (LylatController)
+	{
+		if (Val > 0.0f)
+		{
+			if (!LylatController->IsOutOfFrustumYDown(PlayerLocation))
+				PlayerInputLocation.Z += Val*PlayerMovementSpeed;
 
-	// When steering, we decrease pitch slightly
-	TargetPitchSpeed += (FMath::Abs(CurrentYawSpeed) * -0.2f);
+			if (!LylatController->IsOutOfFrustumYDown(AimPointLocation))
+				AimPointInputLocation.Z += Val*AimPointMovementSpeed;
+		}
+		else
+		{
+			if (!LylatController->IsOutOfFrustumYUp(PlayerLocation))
+				PlayerInputLocation.Z += Val*PlayerMovementSpeed;
 
-	// Smoothly interpolate to target pitch speed
-	CurrentPitchSpeed = FMath::FInterpTo(CurrentPitchSpeed, TargetPitchSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+			if (!LylatController->IsOutOfFrustumYUp(AimPointLocation))
+				AimPointInputLocation.Z += Val*AimPointMovementSpeed;
+		}
+	}
+
+	if (Val != 0.0f)
+		MovementInputPressed = true;
 }
 
 void ALylatDragoonPawn::MoveRightInput(float Val)
 {
-	// Target yaw speed is based on input
-	float TargetYawSpeed = (Val * TurnSpeed);
+	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
+	if (LylatController)
+	{
+		if (Val > 0.0f)
+		{
+			if (!LylatController->IsOutOfFrustumXRight(PlayerLocation))
+				PlayerInputLocation.Y += Val*PlayerMovementSpeed;
 
-	// Smoothly interpolate to target yaw speed
-	CurrentYawSpeed = FMath::FInterpTo(CurrentYawSpeed, TargetYawSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+			if (!LylatController->IsOutOfFrustumXRight(AimPointLocation))
+				AimPointInputLocation.Y += Val*AimPointMovementSpeed;
+		}
+		else
+		{
+			if (!LylatController->IsOutOfFrustumXLeft(PlayerLocation))
+				PlayerInputLocation.Y += Val*PlayerMovementSpeed;
 
-	// Is there any left/right input?
-	const bool bIsTurning = FMath::Abs(Val) > 0.2f;
+			if (!LylatController->IsOutOfFrustumXLeft(AimPointLocation))
+				AimPointInputLocation.Y += Val*AimPointMovementSpeed;
+		}
+	}
 
-	// If turning, yaw value is used to influence roll
-	// If not turning, roll to reverse current roll value
-	float TargetRollSpeed = bIsTurning ? (CurrentYawSpeed * 0.5f) : (GetActorRotation().Roll * -2.f);
-
-	// Smoothly interpolate roll speed
-	CurrentRollSpeed = FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+	if (Val != 0.0f)
+		MovementInputPressed = true;
 }

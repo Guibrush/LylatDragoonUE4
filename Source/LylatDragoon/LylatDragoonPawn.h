@@ -19,13 +19,17 @@ class ALylatDragoonPawn : public APawn
 	/** Camera component that will be our viewpoint */
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
+
 public:
 	ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer);
 
 	// Begin AActor overrides
+	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	// End AActor overrides
+
+	FVector GetAimPointLocation();
 
 protected:
 
@@ -45,20 +49,36 @@ protected:
 private:
 
 	/** How quickly forward speed changes */
-	UPROPERTY(Category=Plane, EditAnywhere)
+	UPROPERTY(Category = Plane, EditAnywhere)
 	float Acceleration;
 
-	/** How quickly pawn can steer */
-	UPROPERTY(Category=Plane, EditAnywhere)
-	float TurnSpeed;
+	/** How quickly pawn can move */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float PlayerMovementSpeed;
+
+	/** How quickly aim point can move */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float AimPointMovementSpeed;
+
+	/** How quickly aim point recover for itself */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float AimPointRecoverySpeed;
+
+	/** How far from the centre of the screen aim point has to recover */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float AimPointRecoveryTolerance;
 
 	/** Max forward speed */
 	UPROPERTY(Category = Pitch, EditAnywhere)
 	float MaxSpeed;
 
 	/** Min forward speed */
-	UPROPERTY(Category=Yaw, EditAnywhere)
+	UPROPERTY(Category = Yaw, EditAnywhere)
 	float MinSpeed;
+
+	/** Distance from level course to the aim point */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float AimPointDistance;
 
 	/** Current forward speed */
 	float CurrentForwardSpeed;
@@ -71,6 +91,29 @@ private:
 
 	/** Current roll speed */
 	float CurrentRollSpeed;
+
+	/** Level course location in the previous frame */
+	FVector PreviousLevelCourseLocation;
+
+	/** Player input. Its an offset from level course object */
+	FVector PlayerInputLocation;
+
+	/** Aim point input. Its an offset from fixed aim point */
+	FVector AimPointInputLocation;
+
+	/** Movement direction from level course */
+	FVector MovementDirection;
+
+	/** Location of the aim point */
+	FVector AimPointLocation;
+
+	/** Location of the player */
+	FVector PlayerLocation;
+
+	bool MovementInputPressed;
+
+	/** Object to follow level course */
+	class ALylatDragoonLevelCourse* LevelCourse;
 
 public:
 	/** Returns PlaneMesh subobject **/
