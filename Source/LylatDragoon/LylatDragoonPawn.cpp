@@ -93,6 +93,25 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 
 		// Set current level course position to use it in next frame
 		PreviousLevelCourseLocation = LevelCourse->GetActorLocation();
+
+		// Move camera
+		SpringArm->SocketOffset = CameraInputLocation;
+
+		// Add camera rotation according to player movement
+		if (MovementInputPressed)
+		{
+			if (RightInputPressed)
+			{
+				Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FRotator(0.0f, 0.0f, 20.0f), DeltaSeconds, CameraRotationSpeed));
+			}
+			else if (LeftInputPressed)
+			{
+				Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FRotator(0.0f, 0.0f, -20.0f), DeltaSeconds, CameraRotationSpeed));
+			}
+		}
+		
+		// Camera orientation recovery
+		Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FRotator::ZeroRotator, DeltaSeconds, CameraRecoverySpeed));
 	}
 
 	MovementInputPressed = false;
@@ -168,6 +187,9 @@ void ALylatDragoonPawn::MoveUpInput(float Val)
 
 			if (!LylatController->IsOutOfFrustumYDown(AimPointLocation))
 				AimPointInputLocation.Z += Val*AimPointMovementSpeed;
+
+			DownInputPressed = true;
+			UpInputPressed = false;
 		}
 		else
 		{
@@ -176,11 +198,16 @@ void ALylatDragoonPawn::MoveUpInput(float Val)
 
 			if (!LylatController->IsOutOfFrustumYUp(AimPointLocation))
 				AimPointInputLocation.Z += Val*AimPointMovementSpeed;
+
+			DownInputPressed = false;
+			UpInputPressed = true;
 		}
 	}
 
 	if (Val != 0.0f)
 		MovementInputPressed = true;
+	
+	CameraInputLocation.Z += Val*CameraMovementSpeed;
 }
 
 void ALylatDragoonPawn::MoveRightInput(float Val)
@@ -195,6 +222,9 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 
 			if (!LylatController->IsOutOfFrustumXRight(AimPointLocation))
 				AimPointInputLocation.Y += Val*AimPointMovementSpeed;
+
+			RightInputPressed = true;
+			LeftInputPressed = false;
 		}
 		else
 		{
@@ -203,9 +233,14 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 
 			if (!LylatController->IsOutOfFrustumXLeft(AimPointLocation))
 				AimPointInputLocation.Y += Val*AimPointMovementSpeed;
+			
+			RightInputPressed = false;
+			LeftInputPressed = true;
 		}
 	}
 
 	if (Val != 0.0f)
 		MovementInputPressed = true;
+
+	CameraInputLocation.Y += Val*CameraMovementSpeed;
 }

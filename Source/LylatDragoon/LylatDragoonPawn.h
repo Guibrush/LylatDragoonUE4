@@ -56,6 +56,18 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float PlayerMovementSpeed;
 
+	/** How quickly camera can move */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float CameraMovementSpeed;
+
+	/** How quickly camera can rotate when player moves */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float CameraRotationSpeed;
+
+	/** How quickly camera recover its neutral orientation */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float CameraRecoverySpeed;
+
 	/** How quickly aim point can move */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float AimPointMovementSpeed;
@@ -98,6 +110,9 @@ private:
 	/** Player input. Its an offset from level course object */
 	FVector PlayerInputLocation;
 
+	/** Camera input. Its an offset from camera's target*/
+	FVector CameraInputLocation;
+
 	/** Aim point input. Its an offset from fixed aim point */
 	FVector AimPointInputLocation;
 
@@ -111,6 +126,11 @@ private:
 	FVector PlayerLocation;
 
 	bool MovementInputPressed;
+
+	bool RightInputPressed;
+	bool LeftInputPressed;
+	bool UpInputPressed;
+	bool DownInputPressed;
 
 	/** Object to follow level course */
 	class ALylatDragoonLevelCourse* LevelCourse;
