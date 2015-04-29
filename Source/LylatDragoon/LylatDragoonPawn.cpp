@@ -100,14 +100,27 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 		// Add camera rotation according to player movement
 		if (MovementInputPressed)
 		{
+			FRotator RotationAdded = FRotator::ZeroRotator;
+
 			if (RightInputPressed)
 			{
-				Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FRotator(0.0f, 0.0f, 20.0f), DeltaSeconds, CameraRotationSpeed));
+				RotationAdded += FRotator(0.0f, 20.0f, 5.0f);
 			}
 			else if (LeftInputPressed)
 			{
-				Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FRotator(0.0f, 0.0f, -20.0f), DeltaSeconds, CameraRotationSpeed));
+				RotationAdded += FRotator(0.0f, -20.0f, -5.0f);
 			}
+
+			if (UpInputPressed)
+			{
+				RotationAdded += FRotator(-20.0f, 0.0f, 0.0f);
+			}
+			else if (DownInputPressed)
+			{
+				RotationAdded += FRotator(20.0f, 0.0f, 0.0f);
+			}
+
+			Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, RotationAdded, DeltaSeconds, CameraRotationSpeed));
 		}
 		
 		// Camera orientation recovery
@@ -208,6 +221,7 @@ void ALylatDragoonPawn::MoveUpInput(float Val)
 		MovementInputPressed = true;
 	
 	CameraInputLocation.Z += Val*CameraMovementSpeed;
+	CameraInputLocation.Z = FMath::Clamp<float>(CameraInputLocation.Z, -CameraOffsetLimit.Z, CameraOffsetLimit.Z);
 }
 
 void ALylatDragoonPawn::MoveRightInput(float Val)
@@ -243,4 +257,5 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 		MovementInputPressed = true;
 
 	CameraInputLocation.Y += Val*CameraMovementSpeed;
+	CameraInputLocation.Y = FMath::Clamp<float>(CameraInputLocation.Y, -CameraOffsetLimit.Y, CameraOffsetLimit.Y);
 }

@@ -60,6 +60,10 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float CameraMovementSpeed;
 
+	/** How quickly camera can move */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	FVector CameraOffsetLimit;
+
 	/** How quickly camera can rotate when player moves */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float CameraRotationSpeed;
