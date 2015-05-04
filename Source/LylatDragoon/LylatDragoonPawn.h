@@ -46,6 +46,14 @@ protected:
 	/** Bound to the horizontal axis */
 	void MoveRightInput(float Val);
 
+	void RightTiltPressedInput();
+	void RightTiltReleaseInput();
+	void RightBarrelRollInput();
+
+	void LeftTiltPressedInput();
+	void LeftTiltReleasedInput();
+	void LeftBarrelRollInput();
+
 private:
 
 	/** How quickly forward speed changes */
@@ -56,13 +64,13 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float PlayerMovementSpeed;
 
-	/** How quickly camera can move */
+	/** Limit for player movement */
 	UPROPERTY(Category = Movement, EditAnywhere)
-	float CameraMovementSpeed;
+	FVector PlayerMovementLimit;
 
 	/** How quickly camera can move */
 	UPROPERTY(Category = Movement, EditAnywhere)
-	FVector CameraOffsetLimit;
+	float CameraMovementSpeed;
 
 	/** How quickly camera can rotate when player moves */
 	UPROPERTY(Category = Movement, EditAnywhere)

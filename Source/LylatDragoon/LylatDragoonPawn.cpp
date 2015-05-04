@@ -174,6 +174,14 @@ void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputCo
 	//InputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
 	InputComponent->BindAxis("MoveUp", this, &ALylatDragoonPawn::MoveUpInput);
 	InputComponent->BindAxis("MoveRight", this, &ALylatDragoonPawn::MoveRightInput);
+
+	InputComponent->BindAction("RightTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::RightTiltPressedInput);
+	InputComponent->BindAction("RightTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::RightTiltReleaseInput);
+	InputComponent->BindAction("RightTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::RightBarrelRollInput);
+
+	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::LeftTiltPressedInput);
+	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::LeftTiltReleasedInput);
+	InputComponent->BindAction("LeftTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::LeftBarrelRollInput);
 }
 
 void ALylatDragoonPawn::ThrustInput(float Val)
@@ -220,8 +228,18 @@ void ALylatDragoonPawn::MoveUpInput(float Val)
 	if (Val != 0.0f)
 		MovementInputPressed = true;
 	
-	CameraInputLocation.Z += Val*CameraMovementSpeed;
-	CameraInputLocation.Z = FMath::Clamp<float>(CameraInputLocation.Z, -CameraOffsetLimit.Z, CameraOffsetLimit.Z);
+	if (PlayerInputLocation.Z < -PlayerMovementLimit.Z)
+	{
+		PlayerInputLocation.Z = -PlayerMovementLimit.Z;
+	}
+	else if (PlayerInputLocation.Z > PlayerMovementLimit.Z)
+	{
+		PlayerInputLocation.Z = PlayerMovementLimit.Z;
+	}
+	else
+	{
+		CameraInputLocation.Z += Val*CameraMovementSpeed;
+	}
 }
 
 void ALylatDragoonPawn::MoveRightInput(float Val)
@@ -256,6 +274,46 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 	if (Val != 0.0f)
 		MovementInputPressed = true;
 
-	CameraInputLocation.Y += Val*CameraMovementSpeed;
-	CameraInputLocation.Y = FMath::Clamp<float>(CameraInputLocation.Y, -CameraOffsetLimit.Y, CameraOffsetLimit.Y);
+	if (PlayerInputLocation.Y < -PlayerMovementLimit.Y)
+	{
+		PlayerInputLocation.Y = -PlayerMovementLimit.Y;
+	}
+	else if (PlayerInputLocation.Y > PlayerMovementLimit.Y)
+	{
+		PlayerInputLocation.Y = PlayerMovementLimit.Y;
+	}
+	else
+	{
+		CameraInputLocation.Y += Val*CameraMovementSpeed;
+	}
+}
+
+void ALylatDragoonPawn::RightTiltPressedInput()
+{
+
+}
+
+void ALylatDragoonPawn::RightTiltReleaseInput()
+{
+
+}
+
+void ALylatDragoonPawn::RightBarrelRollInput()
+{
+
+}
+
+void ALylatDragoonPawn::LeftTiltPressedInput()
+{
+
+}
+
+void ALylatDragoonPawn::LeftTiltReleasedInput()
+{
+
+}
+
+void ALylatDragoonPawn::LeftBarrelRollInput()
+{
+
 }
