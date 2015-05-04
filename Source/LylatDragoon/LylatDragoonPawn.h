@@ -64,6 +64,14 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float PlayerMovementSpeed;
 
+	/** How quickly player roll when tilt */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float PlayerTiltRotationSpeed;
+
+	/** How quickly player recover its rotation */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float PlayerRotationRecoverySpeed;
+
 	/** Limit for player movement */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	FVector PlayerMovementLimit;
@@ -143,6 +151,9 @@ private:
 	bool LeftInputPressed;
 	bool UpInputPressed;
 	bool DownInputPressed;
+
+	bool RightTiltPressed;
+	bool LeftTiltPressed;
 
 	/** Object to follow level course */
 	class ALylatDragoonLevelCourse* LevelCourse;

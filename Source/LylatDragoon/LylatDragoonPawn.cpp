@@ -50,6 +50,9 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 
 	PlayerInputLocation = FVector(0.0f, 0.0f, 0.0f);
 	PreviousLevelCourseLocation = FVector(0.0f, 0.0f, 0.0f);
+
+	RightTiltPressed = false;
+	LeftTiltPressed = false;
 }
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
@@ -81,8 +84,18 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 		LylatController->SnapToViewFrustum(PlayerLocation, &PlayerLocation);
 
 		// Calculate the ship rotation
-		FRotator FinalRotation = PawnToAimPoint.Rotation();
-		FinalRotation.Roll = 0.0f;
+		//FRotator FinalRotation = PawnToAimPoint.Rotation();
+		FRotator FinalRotation = FMath::RInterpTo(GetActorRotation(), PawnToAimPoint.Rotation(), DeltaSeconds, PlayerRotationRecoverySpeed);
+
+		if (RightTiltPressed)
+		{
+			FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, 90.0f, DeltaSeconds, PlayerTiltRotationSpeed);
+		}
+
+		if (LeftTiltPressed)
+		{
+			FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, -90.0f, DeltaSeconds, PlayerTiltRotationSpeed);
+		}
 		
 		// Set ship rotation and location
 		SetActorLocation(PlayerLocation);
@@ -290,12 +303,12 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 
 void ALylatDragoonPawn::RightTiltPressedInput()
 {
-
+	RightTiltPressed = true;
 }
 
 void ALylatDragoonPawn::RightTiltReleaseInput()
 {
-
+	RightTiltPressed = false;
 }
 
 void ALylatDragoonPawn::RightBarrelRollInput()
@@ -305,12 +318,12 @@ void ALylatDragoonPawn::RightBarrelRollInput()
 
 void ALylatDragoonPawn::LeftTiltPressedInput()
 {
-
+	LeftTiltPressed = true;
 }
 
 void ALylatDragoonPawn::LeftTiltReleasedInput()
 {
-
+	LeftTiltPressed = false;
 }
 
 void ALylatDragoonPawn::LeftBarrelRollInput()
