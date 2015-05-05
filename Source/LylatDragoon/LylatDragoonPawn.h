@@ -23,6 +23,22 @@ class ALylatDragoonPawn : public APawn
 public:
 	ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer);
 
+	/** Current thrust fuel */
+	UPROPERTY(Category = Movement, BlueprintReadOnly)
+	float CurrentThrustFuel;
+
+	/** Indicates wheter thrust fuel recovery is in cooldown or not */
+	UPROPERTY(Category = Movement, BlueprintReadOnly)
+	bool bThrustFuelRecoveryIsInCooldown;
+
+	/** Current brake resistance */
+	UPROPERTY(Category = Movement, BlueprintReadOnly)
+	float CurrentBrakeResistance;
+
+	/** Indicates wheter brake resistance recovery is in cooldown or not */
+	UPROPERTY(Category = Movement, BlueprintReadOnly)
+	bool bBrakeResistanceRecoveryIsInCooldown;
+
 	// Begin AActor overrides
 	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -54,11 +70,10 @@ protected:
 	void LeftTiltReleasedInput();
 	void LeftBarrelRollInput();
 
-private:
+	void ThrustFuelRecoveryCooldownFinish();
+	void BreakResistanceRecoveryCooldownFinish();
 
-	/** How quickly forward speed changes */
-	UPROPERTY(Category = Plane, EditAnywhere)
-	float Acceleration;
+private:
 
 	/** How quickly pawn can move */
 	UPROPERTY(Category = Movement, EditAnywhere)
@@ -100,29 +115,53 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float AimPointRecoveryTolerance;
 
-	/** Max forward speed */
-	UPROPERTY(Category = Pitch, EditAnywhere)
-	float MaxSpeed;
-
-	/** Min forward speed */
-	UPROPERTY(Category = Yaw, EditAnywhere)
-	float MinSpeed;
-
 	/** Distance from level course to the aim point */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float AimPointDistance;
 
-	/** Current forward speed */
-	float CurrentForwardSpeed;
+	/** Ratio of accel */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float Acceleration;
 
-	/** Current yaw speed */
-	float CurrentYawSpeed;
+	/** Min play rate of the main matinee */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float MinMatineeSpeed;
 
-	/** Current pitch speed */
-	float CurrentPitchSpeed;
+	/** Max play rate of the main matinee */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float MaxMatineeSpeed;
 
-	/** Current roll speed */
-	float CurrentRollSpeed;
+	/** How many thrust time the player can do */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float ThrustFuel;
+
+	/** Speed of the consumption of the thrust fuel */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float ThrustFuelConsumptionRate;
+
+	/** Speed of the recovery of the thrust fuel */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float ThrustFuelRecoveryRate;
+
+	/** Cooldown time for thrust fuel recovery when this gets zero */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float ThrustFuelRecoveryCooldown;
+
+	/** How many brake time the player can do */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float BrakeResistance;
+
+	/** Speed of the consumption of the brake resistance */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float BrakeResistanceConsumptionRate;
+
+	/** Speed of the recovery of the brake resistance */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float BrakeResistanceRecoveryRate;
+
+	/** Cooldown time for brake resistance recovery when this gets zero */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float BrakeResistanceRecoveryCooldown;
 
 	/** Level course location in the previous frame */
 	FVector PreviousLevelCourseLocation;

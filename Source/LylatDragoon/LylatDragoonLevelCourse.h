@@ -14,6 +14,10 @@ public:
 	// Sets default values for this actor's properties
 	ALylatDragoonLevelCourse();
 
+	// The matinee which control this actor
+	UPROPERTY(Category = Movement, EditAnywhere)
+	class AMatineeActor* MatineeController;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	

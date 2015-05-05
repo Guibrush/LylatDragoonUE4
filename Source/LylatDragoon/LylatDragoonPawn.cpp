@@ -6,6 +6,8 @@
 #include "LylatDragoonLevelCourse.h"
 #include "LylatDragoonPlayerController.h"
 
+#include "Matinee/MatineeActor.h"
+
 #include "EngineUtils.h"
 #include "DrawDebugHelpers.h"
 
@@ -42,17 +44,19 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
 
 	// Set handling parameters
-	Acceleration = 500.f;
 	PlayerMovementSpeed = 50.f;
-	MaxSpeed = 4000.f;
-	MinSpeed = 500.f;
-	CurrentForwardSpeed = 500.f;
 
 	PlayerInputLocation = FVector(0.0f, 0.0f, 0.0f);
 	PreviousLevelCourseLocation = FVector(0.0f, 0.0f, 0.0f);
 
 	RightTiltPressed = false;
 	LeftTiltPressed = false;
+
+	CurrentThrustFuel = ThrustFuel;
+	bThrustFuelRecoveryIsInCooldown = false;
+
+	CurrentBrakeResistance = BrakeResistance;
+	bBrakeResistanceRecoveryIsInCooldown = false;
 }
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
@@ -142,6 +146,16 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 
 	MovementInputPressed = false;
 
+	if (!bThrustFuelRecoveryIsInCooldown)
+	{
+		CurrentThrustFuel = FMath::Clamp(CurrentThrustFuel + (ThrustFuelRecoveryRate * DeltaSeconds), 0.0f, ThrustFuel);
+	}
+
+	if (!bBrakeResistanceRecoveryIsInCooldown)
+	{
+		CurrentBrakeResistance = FMath::Clamp(CurrentBrakeResistance + (BrakeResistanceRecoveryRate * DeltaSeconds), 0.0f, BrakeResistance);
+	}
+
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
 }
@@ -173,9 +187,6 @@ FVector ALylatDragoonPawn::GetAimPointLocation()
 void ALylatDragoonPawn::ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Super::ReceiveHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
-
-	// Set velocity to zero upon collision
-	CurrentForwardSpeed = 0.f;
 }
 
 
@@ -184,7 +195,8 @@ void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputCo
 	check(InputComponent);
 
 	// Bind our control axis' to callback functions
-	//InputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
+	InputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
+
 	InputComponent->BindAxis("MoveUp", this, &ALylatDragoonPawn::MoveUpInput);
 	InputComponent->BindAxis("MoveRight", this, &ALylatDragoonPawn::MoveRightInput);
 
@@ -199,14 +211,39 @@ void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputCo
 
 void ALylatDragoonPawn::ThrustInput(float Val)
 {
-	// Is there no input?
-	bool bHasInput = !FMath::IsNearlyEqual(Val, 0.f);
-	// If input is not held down, reduce speed
-	float CurrentAcc = bHasInput ? (Val * Acceleration) : (-0.5f * Acceleration);
-	// Calculate new speed
-	float NewForwardSpeed = CurrentForwardSpeed + (GetWorld()->GetDeltaSeconds() * CurrentAcc);
-	// Clamp between MinSpeed and MaxSpeed
-	CurrentForwardSpeed = FMath::Clamp(NewForwardSpeed, MinSpeed, MaxSpeed);
+	float FinalPlayRate = 1.0f;
+
+	if (!FMath::IsNearlyEqual(Val, 0.f))
+	{
+		if ((Val > 0.0f) && (CurrentThrustFuel > 0.0f) && !bThrustFuelRecoveryIsInCooldown)
+		{
+			FinalPlayRate = FMath::Clamp(FinalPlayRate + (Val * Acceleration), MinMatineeSpeed, MaxMatineeSpeed);
+			CurrentThrustFuel -= Val * ThrustFuelConsumptionRate;
+			
+			if (CurrentThrustFuel <= 0.0f)
+			{
+				bThrustFuelRecoveryIsInCooldown = true;
+				GetWorldTimerManager().SetTimer(this, &ALylatDragoonPawn::ThrustFuelRecoveryCooldownFinish, ThrustFuelRecoveryCooldown, false);
+			}
+		}
+
+		if ((Val < 0.0f) && (CurrentBrakeResistance > 0.0f) && !bBrakeResistanceRecoveryIsInCooldown)
+		{
+			FinalPlayRate = FMath::Clamp(FinalPlayRate + (Val * Acceleration), MinMatineeSpeed, MaxMatineeSpeed);
+			CurrentBrakeResistance += Val * BrakeResistanceConsumptionRate;
+
+			if (CurrentBrakeResistance <= 0.0f)
+			{
+				bBrakeResistanceRecoveryIsInCooldown = true;
+				GetWorldTimerManager().SetTimer(this, &ALylatDragoonPawn::BreakResistanceRecoveryCooldownFinish, BrakeResistanceRecoveryCooldown, false);
+			}
+		}
+	}
+
+	CurrentThrustFuel = FMath::Clamp(CurrentThrustFuel, 0.0f, ThrustFuel);
+	CurrentBrakeResistance = FMath::Clamp(CurrentBrakeResistance, 0.0f, BrakeResistance);
+
+	LevelCourse->MatineeController->PlayRate = FMath::FInterpTo(LevelCourse->MatineeController->PlayRate, FinalPlayRate, GetWorld()->DeltaTimeSeconds, 1000.0f);
 }
 
 void ALylatDragoonPawn::MoveUpInput(float Val)
@@ -329,4 +366,14 @@ void ALylatDragoonPawn::LeftTiltReleasedInput()
 void ALylatDragoonPawn::LeftBarrelRollInput()
 {
 
+}
+
+void ALylatDragoonPawn::ThrustFuelRecoveryCooldownFinish()
+{
+	bThrustFuelRecoveryIsInCooldown = false;
+}
+
+void ALylatDragoonPawn::BreakResistanceRecoveryCooldownFinish()
+{
+	bBrakeResistanceRecoveryIsInCooldown = false;
 }
