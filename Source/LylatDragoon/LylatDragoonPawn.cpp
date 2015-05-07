@@ -223,7 +223,8 @@ void ALylatDragoonPawn::ThrustInput(float Val)
 			if (CurrentThrustFuel <= 0.0f)
 			{
 				bThrustFuelRecoveryIsInCooldown = true;
-				GetWorldTimerManager().SetTimer(this, &ALylatDragoonPawn::ThrustFuelRecoveryCooldownFinish, ThrustFuelRecoveryCooldown, false);
+				FTimerHandle TimerHandle;
+				GetWorldTimerManager().SetTimer(TimerHandle, this, &ALylatDragoonPawn::ThrustFuelRecoveryCooldownFinish, ThrustFuelRecoveryCooldown, false);
 			}
 		}
 
@@ -235,7 +236,8 @@ void ALylatDragoonPawn::ThrustInput(float Val)
 			if (CurrentBrakeResistance <= 0.0f)
 			{
 				bBrakeResistanceRecoveryIsInCooldown = true;
-				GetWorldTimerManager().SetTimer(this, &ALylatDragoonPawn::BreakResistanceRecoveryCooldownFinish, BrakeResistanceRecoveryCooldown, false);
+				FTimerHandle TimerHandle;
+				GetWorldTimerManager().SetTimer(TimerHandle, this, &ALylatDragoonPawn::BreakResistanceRecoveryCooldownFinish, BrakeResistanceRecoveryCooldown, false);
 			}
 		}
 	}
