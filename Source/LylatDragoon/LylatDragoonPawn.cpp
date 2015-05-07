@@ -5,6 +5,7 @@
 
 #include "LylatDragoonLevelCourse.h"
 #include "LylatDragoonPlayerController.h"
+#include "LylatDragoonProjectile.h"
 
 #include "Matinee/MatineeActor.h"
 
@@ -250,6 +251,8 @@ void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputCo
 	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::LeftTiltPressedInput);
 	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::LeftTiltReleasedInput);
 	InputComponent->BindAction("LeftTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::LeftBarrelRollInput);
+
+	InputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::FireInput);
 }
 
 void ALylatDragoonPawn::ThrustInput(float Val)
@@ -428,6 +431,14 @@ void ALylatDragoonPawn::LeftBarrelRollInput()
 	{
 		DoingBarrellRollLeft = true;
 		GetWorldTimerManager().SetTimer(BarrellRollTimerHandle, this, &ALylatDragoonPawn::FinishBarrellRoll, BarrellRollTime, false);
+	}
+}
+
+void ALylatDragoonPawn::FireInput()
+{
+	if (Projectile)
+	{
+
 	}
 }
 

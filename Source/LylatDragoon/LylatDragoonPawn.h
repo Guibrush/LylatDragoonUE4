@@ -70,6 +70,8 @@ protected:
 	void LeftTiltReleasedInput();
 	void LeftBarrelRollInput();
 
+	void FireInput();
+
 	void ThrustFuelRecoveryCooldownFinish();
 	void BreakResistanceRecoveryCooldownFinish();
 
@@ -175,6 +177,9 @@ private:
 
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float BarrellRollDistance;
+
+	UPROPERTY(Category = Combat, EditAnywhere)
+	TSubclassOf<class ALylatDragoonProjectile> Projectile;
 
 	/** Level course location in the previous frame */
 	FVector PreviousLevelCourseLocation;
