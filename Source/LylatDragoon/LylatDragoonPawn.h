@@ -73,6 +73,10 @@ protected:
 	void ThrustFuelRecoveryCooldownFinish();
 	void BreakResistanceRecoveryCooldownFinish();
 
+	void FinishBarrellRoll();
+
+	void CheckMovementLimitsAndMoveCamera(float CameraMovement);
+
 private:
 
 	/** How quickly pawn can move */
@@ -163,6 +167,15 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float BrakeResistanceRecoveryCooldown;
 
+	UPROPERTY(Category = Movement, EditAnywhere)
+	class UCurveFloat* BarrellRollCurve;
+
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float BarrellRollTime;
+
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float BarrellRollDistance;
+
 	/** Level course location in the previous frame */
 	FVector PreviousLevelCourseLocation;
 
@@ -193,6 +206,13 @@ private:
 
 	bool RightTiltPressed;
 	bool LeftTiltPressed;
+
+	bool DoingBarrellRollRight;
+	bool DoingBarrellRollLeft;
+
+	float PreviousBarrellRollPosition;
+
+	FTimerHandle BarrellRollTimerHandle;
 
 	/** Object to follow level course */
 	class ALylatDragoonLevelCourse* LevelCourse;

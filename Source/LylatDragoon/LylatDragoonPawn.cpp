@@ -57,6 +57,9 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 
 	CurrentBrakeResistance = BrakeResistance;
 	bBrakeResistanceRecoveryIsInCooldown = false;
+
+	DoingBarrellRollRight = false;
+	DoingBarrellRollLeft = false;
 }
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
@@ -64,22 +67,50 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
 	if (LevelCourse && LylatController)
 	{
-		// Calculate the movement direction and rotation quaternion
+		// Calculate utils
 		MovementDirection = LevelCourse->GetActorLocation() - PreviousLevelCourseLocation;
 		FQuat RelativeMovementQuat = MovementDirection.Rotation().Quaternion();
+		FVector FixedAimPointLocation = LevelCourse->GetActorLocation() + (MovementDirection.GetSafeNormal() * AimPointDistance);
+		FVector PawnToAimPoint = AimPointLocation - GetActorLocation();
 
 		// Calculate the recovery movement of the aim point
-		FVector PawnToAimPoint = (AimPointLocation - GetActorLocation());
-		if (!MovementDirection.GetSafeNormal().Equals(PawnToAimPoint.GetSafeNormal(), AimPointRecoveryTolerance) && !MovementInputPressed)
+		FVector FarAimPoint = LevelCourse->GetActorLocation() + (MovementDirection.GetSafeNormal() * AimPointDistance * 5);
+		FPlane AimPointPlane = FPlane(FixedAimPointLocation, MovementDirection.GetSafeNormal());
+		FVector DesireAimPointLocation = FMath::LinePlaneIntersection(GetActorLocation(), FarAimPoint, AimPointPlane);
+		
+		FVector LocalDesireAimOffset = DesireAimPointLocation - FixedAimPointLocation;
+		FVector DesireAimPointInputLocation = RelativeMovementQuat.RotateVector(LocalDesireAimOffset);
+		DesireAimPointInputLocation.Y = -DesireAimPointInputLocation.Y;
+
+		if (!DesireAimPointLocation.Equals(AimPointLocation, AimPointRecoveryTolerance) && !MovementInputPressed)
 		{
-			AimPointInputLocation = FMath::VInterpTo(AimPointInputLocation, FVector::ZeroVector, DeltaSeconds, AimPointRecoverySpeed);
+			AimPointInputLocation = FMath::VInterpTo(AimPointInputLocation, DesireAimPointInputLocation, DeltaSeconds, AimPointRecoverySpeed);
 		}
 
+		//DrawDebugSolidPlane(GetWorld(), AimPointPlane, FixedAimPointLocation, 200.0f, FColor::Red);
+		//DrawDebugPoint(GetWorld(), DesireAimPointLocation, 20.0f, FColor::Green);
+		//DrawDebugPoint(GetWorld(), FarAimPoint, 20.0f, FColor::Yellow);
+
 		// Calculate the aim point and its position according to player input
-		FVector FixedAimPointLocation = LevelCourse->GetActorLocation() + (MovementDirection.GetSafeNormal() * AimPointDistance);
 		FVector LocalAimOffset = RelativeMovementQuat.RotateVector(AimPointInputLocation);
 		AimPointLocation = FixedAimPointLocation + LocalAimOffset;
 		LylatController->SnapToViewFrustum(AimPointLocation, &AimPointLocation);
+
+		// Calculate the player input valor if player is doing a barrell roll
+		float BarrellRollCurrentPosition = BarrellRollCurve->GetFloatValue(GetWorldTimerManager().GetTimerElapsed(BarrellRollTimerHandle) / BarrellRollTime);
+		if (DoingBarrellRollLeft)
+		{
+			PlayerInputLocation.Y -= (BarrellRollCurrentPosition - PreviousBarrellRollPosition) * BarrellRollDistance;
+			
+			CheckMovementLimitsAndMoveCamera(-((BarrellRollCurrentPosition - PreviousBarrellRollPosition) * BarrellRollDistance) * 0.75f);
+		}
+		else if (DoingBarrellRollRight)
+		{
+			PlayerInputLocation.Y += (BarrellRollCurrentPosition - PreviousBarrellRollPosition) * BarrellRollDistance;
+
+			CheckMovementLimitsAndMoveCamera(((BarrellRollCurrentPosition - PreviousBarrellRollPosition) * BarrellRollDistance) * 0.75f);
+		}
+		PreviousBarrellRollPosition = BarrellRollCurrentPosition;
 
 		// Calculate the ship position according to player input
 		PlayerLocation = LevelCourse->GetActorLocation();
@@ -90,6 +121,18 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 		// Calculate the ship rotation
 		//FRotator FinalRotation = PawnToAimPoint.Rotation();
 		FRotator FinalRotation = FMath::RInterpTo(GetActorRotation(), PawnToAimPoint.Rotation(), DeltaSeconds, PlayerRotationRecoverySpeed);
+
+		if (MovementInputPressed)
+		{
+			if (RightInputPressed)
+			{
+				FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, 45.0f, DeltaSeconds, PlayerRotationRecoverySpeed * 2);
+			}
+			else if (LeftInputPressed)
+			{
+				FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, -45.0f, DeltaSeconds, PlayerRotationRecoverySpeed * 2);
+			}
+		}
 
 		if (RightTiltPressed)
 		{
@@ -251,7 +294,7 @@ void ALylatDragoonPawn::ThrustInput(float Val)
 void ALylatDragoonPawn::MoveUpInput(float Val)
 {
 	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
-	if (LylatController)
+	if (LylatController && !FMath::IsNearlyZero(Val, 0.1f))
 	{
 		if (Val > 0.0f)
 		{
@@ -276,6 +319,11 @@ void ALylatDragoonPawn::MoveUpInput(float Val)
 			UpInputPressed = true;
 		}
 	}
+	else
+	{
+		DownInputPressed = false;
+		UpInputPressed = false;
+	}
 
 	if (Val != 0.0f)
 		MovementInputPressed = true;
@@ -297,7 +345,7 @@ void ALylatDragoonPawn::MoveUpInput(float Val)
 void ALylatDragoonPawn::MoveRightInput(float Val)
 {
 	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
-	if (LylatController)
+	if (LylatController && !FMath::IsNearlyZero(Val, 0.1f))
 	{
 		if (Val > 0.0f)
 		{
@@ -321,6 +369,11 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 			RightInputPressed = false;
 			LeftInputPressed = true;
 		}
+	}
+	else
+	{
+		RightInputPressed = false;
+		LeftInputPressed = false;
 	}
 
 	if (Val != 0.0f)
@@ -352,7 +405,11 @@ void ALylatDragoonPawn::RightTiltReleaseInput()
 
 void ALylatDragoonPawn::RightBarrelRollInput()
 {
-
+	if (!DoingBarrellRollLeft && !DoingBarrellRollRight)
+	{
+		DoingBarrellRollRight = true;
+		GetWorldTimerManager().SetTimer(BarrellRollTimerHandle, this, &ALylatDragoonPawn::FinishBarrellRoll, BarrellRollTime, false);
+	}
 }
 
 void ALylatDragoonPawn::LeftTiltPressedInput()
@@ -367,7 +424,11 @@ void ALylatDragoonPawn::LeftTiltReleasedInput()
 
 void ALylatDragoonPawn::LeftBarrelRollInput()
 {
-
+	if (!DoingBarrellRollLeft && !DoingBarrellRollRight)
+	{
+		DoingBarrellRollLeft = true;
+		GetWorldTimerManager().SetTimer(BarrellRollTimerHandle, this, &ALylatDragoonPawn::FinishBarrellRoll, BarrellRollTime, false);
+	}
 }
 
 void ALylatDragoonPawn::ThrustFuelRecoveryCooldownFinish()
@@ -378,4 +439,26 @@ void ALylatDragoonPawn::ThrustFuelRecoveryCooldownFinish()
 void ALylatDragoonPawn::BreakResistanceRecoveryCooldownFinish()
 {
 	bBrakeResistanceRecoveryIsInCooldown = false;
+}
+
+void ALylatDragoonPawn::FinishBarrellRoll()
+{
+	DoingBarrellRollLeft = false;
+	DoingBarrellRollRight = false;
+}
+
+void ALylatDragoonPawn::CheckMovementLimitsAndMoveCamera(float CameraMovement)
+{
+	if (PlayerInputLocation.Y < -PlayerMovementLimit.Y)
+	{
+		PlayerInputLocation.Y = -PlayerMovementLimit.Y;
+	}
+	else if (PlayerInputLocation.Y > PlayerMovementLimit.Y)
+	{
+		PlayerInputLocation.Y = PlayerMovementLimit.Y;
+	}
+	else
+	{
+		CameraInputLocation.Y += CameraMovement;
+	}
 }
