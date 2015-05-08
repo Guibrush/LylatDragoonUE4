@@ -233,7 +233,6 @@ void ALylatDragoonPawn::ReceiveHit(class UPrimitiveComponent* MyComp, class AAct
 	Super::ReceiveHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 }
 
-
 void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
 	check(InputComponent);
@@ -438,7 +437,15 @@ void ALylatDragoonPawn::FireInput()
 {
 	if (Projectile)
 	{
+		FTransform SpawnTM(GetTransform());
+		ALylatDragoonProjectile* ProjectileSpawned = Cast<ALylatDragoonProjectile>(UGameplayStatics::BeginSpawningActorFromClass(this, Projectile, SpawnTM));
+		if (ProjectileSpawned)
+		{
+			ProjectileSpawned->Instigator = Instigator;
+			ProjectileSpawned->SetOwner(this);
 
+			UGameplayStatics::FinishSpawningActor(ProjectileSpawned, SpawnTM);
+		}
 	}
 }
 

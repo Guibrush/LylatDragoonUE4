@@ -20,6 +20,10 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+	/** Projectile speed when fired */
+	UPROPERTY(Category = ProjectileMovement, EditAnywhere)
+	float ProjectileSpeed;
+
 	
 	
 };
