@@ -39,10 +39,14 @@ public:
 	UPROPERTY(Category = Movement, BlueprintReadOnly)
 	bool bBrakeResistanceRecoveryIsInCooldown;
 
+	UPROPERTY(Category = Health, BlueprintReadOnly)
+	float CurrentHealth;
+
 	// Begin AActor overrides
 	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	// End AActor overrides
 
 	FVector GetAimPointLocation();
@@ -78,6 +82,8 @@ protected:
 	void FinishBarrellRoll();
 
 	void CheckMovementLimitsAndMoveCamera(float CameraMovement);
+
+	void Die();
 
 private:
 
@@ -180,6 +186,9 @@ private:
 
 	UPROPERTY(Category = Combat, EditAnywhere)
 	TSubclassOf<class ALylatDragoonProjectile> Projectile;
+
+	UPROPERTY(Category = Health, EditAnywhere)
+	float MaxHealth;
 
 	/** Level course location in the previous frame */
 	FVector PreviousLevelCourseLocation;

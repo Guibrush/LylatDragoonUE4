@@ -53,10 +53,8 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 	RightTiltPressed = false;
 	LeftTiltPressed = false;
 
-	CurrentThrustFuel = ThrustFuel;
 	bThrustFuelRecoveryIsInCooldown = false;
 
-	CurrentBrakeResistance = BrakeResistance;
 	bBrakeResistanceRecoveryIsInCooldown = false;
 
 	DoingBarrellRollRight = false;
@@ -221,6 +219,10 @@ void ALylatDragoonPawn::PostInitializeComponents()
 
 		SpringArm->AttachTo(LevelCourse->GetRootComponent());
 	}
+
+	CurrentThrustFuel = ThrustFuel;
+	CurrentBrakeResistance = BrakeResistance;
+	CurrentHealth = MaxHealth;
 }
 
 FVector ALylatDragoonPawn::GetAimPointLocation()
@@ -231,6 +233,20 @@ FVector ALylatDragoonPawn::GetAimPointLocation()
 void ALylatDragoonPawn::ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Super::ReceiveHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	TakeDamage(10.0f, FDamageEvent(), nullptr, Other);
+}
+
+float ALylatDragoonPawn::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	CurrentHealth -= Damage;
+
+	if (CurrentHealth <= 0.0f)
+	{
+		Die();
+	}
+
+	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }
 
 void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
@@ -479,4 +495,9 @@ void ALylatDragoonPawn::CheckMovementLimitsAndMoveCamera(float CameraMovement)
 	{
 		CameraInputLocation.Y += CameraMovement;
 	}
+}
+
+void ALylatDragoonPawn::Die()
+{
+	LevelCourse->MatineeController->Reset();
 }
