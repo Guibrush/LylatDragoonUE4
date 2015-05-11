@@ -141,11 +141,11 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float ThrustFuel;
 
-	/** Speed of the consumption of the thrust fuel */
+	/** Speed consumption of the thrust fuel */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float ThrustFuelConsumptionRate;
 
-	/** Speed of the recovery of the thrust fuel */
+	/** Speed recovery of the thrust fuel */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float ThrustFuelRecoveryRate;
 
@@ -157,11 +157,11 @@ private:
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float BrakeResistance;
 
-	/** Speed of the consumption of the brake resistance */
+	/** Speed consumption of the brake resistance */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float BrakeResistanceConsumptionRate;
 
-	/** Speed of the recovery of the brake resistance */
+	/** Speed recovery of the brake resistance */
 	UPROPERTY(Category = Movement, EditAnywhere)
 	float BrakeResistanceRecoveryRate;
 
