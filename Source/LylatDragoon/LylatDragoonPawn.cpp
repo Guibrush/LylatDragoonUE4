@@ -233,8 +233,18 @@ FVector ALylatDragoonPawn::GetAimPointLocation()
 void ALylatDragoonPawn::ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Super::ReceiveHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+}
 
-	TakeDamage(10.0f, FDamageEvent(), nullptr, Other);
+void ALylatDragoonPawn::ReceiveActorBeginOverlap(AActor* OtherActor)
+{
+	Super::ReceiveActorBeginOverlap(OtherActor);
+
+	TakeDamage(10.0f, FDamageEvent(), nullptr, OtherActor);
+}
+
+void ALylatDragoonPawn::ReceiveActorEndOverlap(AActor* OtherActor)
+{
+	Super::ReceiveActorEndOverlap(OtherActor);
 }
 
 float ALylatDragoonPawn::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
