@@ -223,6 +223,9 @@ private:
 	bool RightTiltPressed;
 	bool LeftTiltPressed;
 
+	bool DoingBarrellRollRightStill;
+	bool DoingBarrellRollLeftStill;
+
 	bool DoingBarrellRollRight;
 	bool DoingBarrellRollLeft;
 
