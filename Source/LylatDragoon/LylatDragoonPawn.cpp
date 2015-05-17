@@ -538,5 +538,6 @@ void ALylatDragoonPawn::CheckMovementLimitsAndMoveCamera(float CameraMovement)
 
 void ALylatDragoonPawn::Die()
 {
-	LevelCourse->MatineeController->Reset();
+	LevelCourse->MatineeController->SetPosition(0.0f, true);
+	CurrentHealth = MaxHealth;
 }
