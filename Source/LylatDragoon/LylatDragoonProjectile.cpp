@@ -24,7 +24,7 @@ void ALylatDragoonProjectile::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 	
-	FVector FinalLocation = GetActorLocation() + (GetActorRotation().Vector().SafeNormal() * (DeltaTime * ProjectileSpeed));
+	FVector FinalLocation = GetActorLocation() + (GetActorRotation().Vector().GetSafeNormal() * (DeltaTime * ProjectileSpeed));
 
 	SetActorLocation(FinalLocation);
 }

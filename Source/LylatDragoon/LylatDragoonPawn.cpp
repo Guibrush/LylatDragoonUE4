@@ -233,21 +233,21 @@ FVector ALylatDragoonPawn::GetAimPointLocation()
 	return AimPointLocation;
 }
 
-void ALylatDragoonPawn::ReceiveHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+void ALylatDragoonPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Super::ReceiveHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
 }
 
-void ALylatDragoonPawn::ReceiveActorBeginOverlap(AActor* OtherActor)
+void ALylatDragoonPawn::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	Super::ReceiveActorBeginOverlap(OtherActor);
+	Super::NotifyActorBeginOverlap(OtherActor);
 
 	TakeDamage(10.0f, FDamageEvent(), nullptr, OtherActor);
 }
 
-void ALylatDragoonPawn::ReceiveActorEndOverlap(AActor* OtherActor)
+void ALylatDragoonPawn::NotifyActorEndOverlap(AActor* OtherActor)
 {
-	Super::ReceiveActorEndOverlap(OtherActor);
+	Super::NotifyActorEndOverlap(OtherActor);
 }
 
 float ALylatDragoonPawn::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
