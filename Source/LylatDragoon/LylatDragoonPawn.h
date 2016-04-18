@@ -68,13 +68,17 @@ protected:
 	/** Bound to the horizontal axis */
 	void MoveRightInput(float Val);
 
-	void RightTiltPressedInput();
-	void RightTiltReleaseInput();
-	void RightBarrelRollInput();
+	//void RightTiltPressedInput();
+	//void RightTiltReleaseInput();
+	//void RightBarrelRollInput();
 
-	void LeftTiltPressedInput();
-	void LeftTiltReleasedInput();
-	void LeftBarrelRollInput();
+	//void LeftTiltPressedInput();
+	//void LeftTiltReleasedInput();
+	//void LeftBarrelRollInput();
+
+	void TiltPressedInput();
+	void TiltReleaseInput();
+	void BarrelRollInput();
 
 	void FireInput();
 
@@ -219,12 +223,6 @@ private:
 	bool LeftInputPressed;
 	bool UpInputPressed;
 	bool DownInputPressed;
-
-	bool RightTiltPressed;
-	bool LeftTiltPressed;
-
-	bool DoingBarrellRollRightStill;
-	bool DoingBarrellRollLeftStill;
 
 	bool DoingBarrellRollRight;
 	bool DoingBarrellRollLeft;

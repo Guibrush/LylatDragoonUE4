@@ -50,18 +50,12 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 	PlayerInputLocation = FVector(0.0f, 0.0f, 0.0f);
 	PreviousLevelCourseLocation = FVector(0.0f, 0.0f, 0.0f);
 
-	RightTiltPressed = false;
-	LeftTiltPressed = false;
-
 	bThrustFuelRecoveryIsInCooldown = false;
 
 	bBrakeResistanceRecoveryIsInCooldown = false;
 
 	DoingBarrellRollRight = false;
 	DoingBarrellRollLeft = false;
-
-	DoingBarrellRollRightStill = false;
-	DoingBarrellRollLeftStill = false;
 }
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
@@ -75,11 +69,12 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 		FVector FixedAimPointLocation = LevelCourse->GetActorLocation() + (MovementDirection.GetSafeNormal() * AimPointDistance);
 		FVector PawnToAimPoint = AimPointLocation - GetActorLocation();
 
-		// Calculate the recovery movement of the aim point
+		// Calculate the recovery movement of the aim point. This result in the location of the desired aim point location
 		FVector FarAimPoint = LevelCourse->GetActorLocation() + (MovementDirection.GetSafeNormal() * AimPointDistance * 5);
 		FPlane AimPointPlane = FPlane(FixedAimPointLocation, MovementDirection.GetSafeNormal());
 		FVector DesireAimPointLocation = FMath::LinePlaneIntersection(GetActorLocation(), FarAimPoint, AimPointPlane);
 		
+		// Calculate the value of the desired input according to the value of the desired aim point location
 		FVector LocalDesireAimOffset = DesireAimPointLocation - FixedAimPointLocation;
 		FVector DesireAimPointInputLocation = RelativeMovementQuat.RotateVector(LocalDesireAimOffset);
 		DesireAimPointInputLocation.Y = -DesireAimPointInputLocation.Y;
@@ -134,16 +129,6 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 			{
 				FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, -45.0f, DeltaSeconds, PlayerRotationRecoverySpeed * 2);
 			}
-		}
-
-		if (RightTiltPressed)
-		{
-			FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, 90.0f, DeltaSeconds, PlayerTiltRotationSpeed);
-		}
-
-		if (LeftTiltPressed)
-		{
-			FinalRotation.Roll = FMath::FInterpTo(FinalRotation.Roll, -90.0f, DeltaSeconds, PlayerTiltRotationSpeed);
 		}
 		
 		// Set ship rotation and location
@@ -242,7 +227,10 @@ void ALylatDragoonPawn::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	TakeDamage(10.0f, FDamageEvent(), nullptr, OtherActor);
+	if (OtherActor->GetOwner() != this)
+	{
+		TakeDamage(10.0f, FDamageEvent(), nullptr, OtherActor);
+	}
 }
 
 void ALylatDragoonPawn::NotifyActorEndOverlap(AActor* OtherActor)
@@ -272,13 +260,7 @@ void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputCo
 	InputComponent->BindAxis("MoveUp", this, &ALylatDragoonPawn::MoveUpInput);
 	InputComponent->BindAxis("MoveRight", this, &ALylatDragoonPawn::MoveRightInput);
 
-	InputComponent->BindAction("RightTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::RightTiltPressedInput);
-	InputComponent->BindAction("RightTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::RightTiltReleaseInput);
-	InputComponent->BindAction("RightTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::RightBarrelRollInput);
-
-	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::LeftTiltPressedInput);
-	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::LeftTiltReleasedInput);
-	InputComponent->BindAction("LeftTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::LeftBarrelRollInput);
+	InputComponent->BindAction("BarrelRoll", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::BarrelRollInput);
 
 	InputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::FireInput);
 }
@@ -430,57 +412,24 @@ void ALylatDragoonPawn::MoveRightInput(float Val)
 	}
 }
 
-void ALylatDragoonPawn::RightTiltPressedInput()
+void ALylatDragoonPawn::BarrelRollInput()
 {
-	RightTiltPressed = true;
-}
-
-void ALylatDragoonPawn::RightTiltReleaseInput()
-{
-	RightTiltPressed = false;
-}
-
-void ALylatDragoonPawn::RightBarrelRollInput()
-{
-	if (!DoingBarrellRollLeft && !DoingBarrellRollRight && !DoingBarrellRollLeftStill && !DoingBarrellRollRightStill)
+	if (!DoingBarrellRollLeft && !DoingBarrellRollRight)
 	{
 		if (RightInputPressed)
 		{
 			DoingBarrellRollRight = true;
 			DoingBarrellRollLeft = false;
 		}
-		else
-		{
-			DoingBarrellRollRightStill = true;
-			DoingBarrellRollLeftStill = false;
-		}
-		GetWorldTimerManager().SetTimer(BarrellRollTimerHandle, this, &ALylatDragoonPawn::FinishBarrellRoll, BarrellRollTime, false);
-	}
-}
-
-void ALylatDragoonPawn::LeftTiltPressedInput()
-{
-	LeftTiltPressed = true;
-}
-
-void ALylatDragoonPawn::LeftTiltReleasedInput()
-{
-	LeftTiltPressed = false;
-}
-
-void ALylatDragoonPawn::LeftBarrelRollInput()
-{
-	if (!DoingBarrellRollLeft && !DoingBarrellRollRight && !DoingBarrellRollLeftStill && !DoingBarrellRollRightStill)
-	{
-		if (LeftInputPressed)
+		else if (LeftInputPressed)
 		{
 			DoingBarrellRollRight = false;
 			DoingBarrellRollLeft = true;
 		}
 		else
 		{
-			DoingBarrellRollRightStill = false;
-			DoingBarrellRollLeftStill = true;
+			DoingBarrellRollRight = false;
+			DoingBarrellRollLeft = false;
 		}
 		GetWorldTimerManager().SetTimer(BarrellRollTimerHandle, this, &ALylatDragoonPawn::FinishBarrellRoll, BarrellRollTime, false);
 	}
@@ -491,7 +440,7 @@ void ALylatDragoonPawn::FireInput()
 	if (Projectile)
 	{
 		FTransform SpawnTM(GetTransform());
-		ALylatDragoonProjectile* ProjectileSpawned = Cast<ALylatDragoonProjectile>(UGameplayStatics::BeginSpawningActorFromClass(this, Projectile, SpawnTM));
+		ALylatDragoonProjectile* ProjectileSpawned = Cast<ALylatDragoonProjectile>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this, Projectile, SpawnTM));
 		if (ProjectileSpawned)
 		{
 			ProjectileSpawned->Instigator = Instigator;
@@ -516,8 +465,6 @@ void ALylatDragoonPawn::FinishBarrellRoll()
 {
 	DoingBarrellRollLeft = false;
 	DoingBarrellRollRight = false;
-	DoingBarrellRollRightStill = false;
-	DoingBarrellRollLeftStill = false;
 }
 
 void ALylatDragoonPawn::CheckMovementLimitsAndMoveCamera(float CameraMovement)
