@@ -24,6 +24,12 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	
+	FORCEINLINE FVector GetMovementDirection() const { return MovementDirection; }
+
+private:
+
+	FVector MovementDirection;
+
+	FVector PreviousLocation;
 	
 };

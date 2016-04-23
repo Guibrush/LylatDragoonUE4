@@ -27,6 +27,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
-	
+	/** Returns PlaneMesh subobject **/
+	FORCEINLINE class UStaticMeshComponent* GetPlaneMesh() const { return PlaneMesh; }
 	
 };
