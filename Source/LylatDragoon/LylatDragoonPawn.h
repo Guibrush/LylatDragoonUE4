@@ -47,7 +47,7 @@ public:
 protected:
 
 	// Begin APawn overrides
-	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override; // Allows binding actions/axes to functions
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override; // Allows binding actions/axes to functions
 	// End APawn overrides
 
 	/** Bound to the thrust axis */

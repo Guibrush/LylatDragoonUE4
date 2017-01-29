@@ -43,7 +43,7 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 
 	// Create camera component 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
-	Camera->AttachTo(SpringArm, USpringArmComponent::SocketName);
+	Camera->AttachToComponent(SpringArm, FAttachmentTransformRules::KeepRelativeTransform, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
 
 	LeftTiltPressed = false;
@@ -216,25 +216,25 @@ FVector ALylatDragoonPawn::GetAimPointLocation()
 	return AimPointLocation;
 }
 
-void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void ALylatDragoonPawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	check(InputComponent);
+	check(PlayerInputComponent);
 
 	// Bind our control axis to callback functions
-	InputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
+	PlayerInputComponent->BindAxis("Thrust", this, &ALylatDragoonPawn::ThrustInput);
 
-	InputComponent->BindAxis("MoveUp", this, &ALylatDragoonPawn::MoveUpInput);
-	InputComponent->BindAxis("MoveRight", this, &ALylatDragoonPawn::MoveRightInput);
+	PlayerInputComponent->BindAxis("MoveUp", this, &ALylatDragoonPawn::MoveUpInput);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ALylatDragoonPawn::MoveRightInput);
 
-	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::LeftTiltInputPressed);
-	InputComponent->BindAction("LeftTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::LeftTiltInputReleased);
-	InputComponent->BindAction("LeftTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::LeftTiltDoubleInput);
+	PlayerInputComponent->BindAction("LeftTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::LeftTiltInputPressed);
+	PlayerInputComponent->BindAction("LeftTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::LeftTiltInputReleased);
+	PlayerInputComponent->BindAction("LeftTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::LeftTiltDoubleInput);
 
-	InputComponent->BindAction("RightTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::RightTiltInputPressed);
-	InputComponent->BindAction("RightTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::RightTiltInputReleased);
-	InputComponent->BindAction("RightTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::RightTiltDoubleInput);
+	PlayerInputComponent->BindAction("RightTilt", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::RightTiltInputPressed);
+	PlayerInputComponent->BindAction("RightTilt", EInputEvent::IE_Released, this, &ALylatDragoonPawn::RightTiltInputReleased);
+	PlayerInputComponent->BindAction("RightTilt", EInputEvent::IE_DoubleClick, this, &ALylatDragoonPawn::RightTiltDoubleInput);
 
-	InputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::FireInput);
+	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &ALylatDragoonPawn::FireInput);
 }
 
 void ALylatDragoonPawn::ThrustInput(float Val)
@@ -360,6 +360,6 @@ void ALylatDragoonPawn::InitializePawnPosition()
 	{
 		SetActorLocation(LevelCourse->GetActorLocation());
 		SetActorRotation(LevelCourse->GetActorRotation());
-		SpringArm->AttachTo(LevelCourse->GetRootComponent());
+		SpringArm->AttachToComponent(LevelCourse->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 	}
 }
