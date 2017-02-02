@@ -44,6 +44,110 @@ public:
 	/** Return the aim point */
 	FVector GetAimPointLocation();
 
+	/** Blueprint of the projectile to shoot */
+	UPROPERTY(Category = Combat, EditAnywhere)
+	TSubclassOf<class ALylatDragoonProjectile> Projectile;
+
+	/** Max level of energy */
+	UPROPERTY(Category = Energy, EditAnywhere)
+	float MaxEnergy;
+
+	/** Max level of health */
+	UPROPERTY(Category = Health, EditAnywhere)
+	float MaxHealth;
+
+	/** Rate of the consuption of the energy per second for thrust and brake */
+	UPROPERTY(Category = Energy, EditAnywhere)
+	float EnergyConsuptionRate;
+
+	/** For how long the energy is in cooldown when depleted (in seconds)*/
+	UPROPERTY(Category = Energy, EditAnywhere)
+	float EnergyCooldownTime;
+
+	/** Rate of the recovery of the energy per second when not in cooldown */
+	UPROPERTY(Category = Energy, EditAnywhere)
+	float EnergyRecoveryRate;
+
+	/** Rate of the change of the speed per second when we use thrust or brake */
+	UPROPERTY(Category = Speed, EditAnywhere)
+	float SpeedChangeRate;
+
+	/** Minimum speed value when we use break. Is basically the play rate of the level sequence */
+	UPROPERTY(Category = Speed, EditAnywhere)
+	float MinSpeed;
+
+	/** Maximum speed value when we use thrust. Is basically the play rate of the level sequence */
+	UPROPERTY(Category = Speed, EditAnywhere)
+	float MaxSpeed;
+
+	/** Rate of the recovery of the speed per second when we use thrust or brake */
+	UPROPERTY(Category = Speed, EditAnywhere)
+	float SpeedRecoveryRate;
+
+	/** Rotation of the player when we move right or left (in degrees)*/
+	UPROPERTY(Category = Rotation, EditAnywhere)
+	float MovementRotationDegrees;
+
+	/** Rate of the change in the rotation of the player when we use a barrell roll */
+	UPROPERTY(Category = Rotation, EditAnywhere)
+	float RotChangeBarrellRollRate;
+
+	/** Rate of the change in the rotation of the player when we move right or left or we use tilt */
+	UPROPERTY(Category = Rotation, EditAnywhere)
+	float RotChangeRate;
+
+	/** Rate of the recovery of the rotation per second */
+	UPROPERTY(Category = Rotation, EditAnywhere)
+	float RotationRecoveryRate;
+
+	/** Distance of the forward point when we make the calculation of the position of the player according with the rotation. WARNING: It doesn´t have a huge impact in the gameplay so ideally we shouldn´t change this value so often */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float MovRefPointDistance;
+
+	/** Limit distance to move the player from the level course to the right */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float RightMovementLimit;
+
+	/** Limit distance to move the player from the level course to the left. Should be negative */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float LeftMovementLimit;
+
+	/** Limit distance to move the player from the level course to up */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float UpMovementLimit;
+
+	/** Limit distance to move the player from the level course to down. Should be negative */
+	UPROPERTY(Category = Movement, EditAnywhere)
+	float DownMovementLimit;
+
+	/** Vertical displacement of the camera when the player moves vertically from the level course */
+	UPROPERTY(Category = Camera, EditAnywhere)
+	float VerticalCameraDisplacement;
+
+	/** Horizontal displacement of the camera when the player moves horizontally from the level course */
+	UPROPERTY(Category = Camera, EditAnywhere)
+	float HorizontalCameraDisplacement;
+
+	/** Rate of the movement of the camera per second */
+	UPROPERTY(Category = Camera, EditAnywhere)
+	float CamMovementRate;
+
+	/** Rotation of the camera when the player moves right or left (in degrees) */
+	UPROPERTY(Category = Camera, EditAnywhere)
+	float CamRotationDegrees;
+
+	/** Rate of the recovery of the rotation of the camera per second */
+	UPROPERTY(Category = Camera, EditAnywhere)
+	float CamRotationRecoveryRate;
+
+	/** Rate of the rotation of the camera per second */
+	UPROPERTY(Category = Camera, EditAnywhere)
+	float CamRotationRate;
+
+	/** Distance of the point where the player shoot of */
+	UPROPERTY(Category = Combat, EditAnywhere)
+	float AimPointDistance;
+
 protected:
 
 	// Begin APawn overrides
@@ -89,18 +193,6 @@ private:
 
 	/** Teleport the player to the level course position */
 	void InitializePawnPosition();
-
-	/** Blueprint of the projectile to shoot */
-	UPROPERTY(Category = Combat, EditAnywhere)
-	TSubclassOf<class ALylatDragoonProjectile> Projectile;
-
-	/** Max level of energy */
-	UPROPERTY(Category = Energy, EditAnywhere)
-	float MaxEnergy;
-
-	/** Max level of health */
-	UPROPERTY(Category = Health, EditAnywhere)
-	float MaxHealth;
 
 	/** Indicates what was the last value of the right input */
 	float RightInput;

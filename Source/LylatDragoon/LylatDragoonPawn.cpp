@@ -8,6 +8,7 @@
 #include "LylatDragoonProjectile.h"
 
 #include "Matinee/MatineeActor.h"
+#include "LevelSequenceActor.h"
 
 #include "EngineUtils.h"
 #include "DrawDebugHelpers.h"
@@ -54,6 +55,34 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 	DoingRightBarrelRoll = false;
 
 	EnergyInCooldown = false;
+	EnergyConsuptionRate = 10.0f;
+	EnergyCooldownTime = 3.0f;
+	EnergyRecoveryRate = 10.0f;
+
+	SpeedChangeRate = 2.5f;
+	MinSpeed = 0.5f;
+	MaxSpeed = 2.0f;
+	SpeedRecoveryRate = 1.0f;
+
+	MovementRotationDegrees = 10.0f;
+	RotChangeBarrellRollRate = 20.0f;
+	RotChangeRate = 10.0f;
+	RotationRecoveryRate = 2.5f;
+
+	MovRefPointDistance = 100.0f;
+	RightMovementLimit = 1000.0f;
+	LeftMovementLimit = -1000.0f;
+	UpMovementLimit = 500.0f;
+	DownMovementLimit = -500.0f;
+
+	VerticalCameraDisplacement = 0.75f;
+	HorizontalCameraDisplacement = 0.75f;
+	CamMovementRate = 10.0f;
+	CamRotationDegrees = 0.5f;
+	CamRotationRecoveryRate = 10.0f;
+	CamRotationRate = 10.0f;
+
+	AimPointDistance = 5000.0f;
 }
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
@@ -65,7 +94,7 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 		{
 			if (CurrentThrustInput != 0.0f)
 			{
-				CurrentEnergy -= DeltaSeconds * 100.0f;
+				CurrentEnergy -= DeltaSeconds * EnergyConsuptionRate;
 			}
 
 			if (CurrentEnergy < 0.0f)
@@ -73,12 +102,12 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 				CurrentEnergy = 0.0f;
 				EnergyInCooldown = true;
 				FTimerHandle TimerHandle;
-				GetWorldTimerManager().SetTimer(TimerHandle, this, &ALylatDragoonPawn::FinishEnergyCooldown, 3.0f, false);
+				GetWorldTimerManager().SetTimer(TimerHandle, this, &ALylatDragoonPawn::FinishEnergyCooldown, EnergyCooldownTime, false);
 				CurrentThrustInput = 0.0f;
 			}
 			else
 			{
-				CurrentEnergy = FMath::Clamp(CurrentEnergy + DeltaSeconds * 10.0f, 0.0f, MaxEnergy);
+				CurrentEnergy = FMath::Clamp(CurrentEnergy + DeltaSeconds * EnergyRecoveryRate, 0.0f, MaxEnergy);
 			}
 		}
 		else
@@ -86,51 +115,51 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 			CurrentThrustInput = 0.0f;
 		}
 
-		float DesirePlayRate = LevelCourse->MatineeController->PlayRate + CurrentThrustInput;
-		float FinalPlayRate = FMath::Clamp(FMath::FInterpTo(LevelCourse->MatineeController->PlayRate, DesirePlayRate, DeltaSeconds, 2.5f), 0.5f, 2.0f);
-		FinalPlayRate = FMath::FInterpTo(FinalPlayRate, 1.0f, DeltaSeconds, 1.0f);
-		LevelCourse->MatineeController->PlayRate = FinalPlayRate;
+		float DesirePlayRate = LevelCourse->SequenceController->SequencePlayer->GetPlayRate() + CurrentThrustInput;
+		float FinalPlayRate = FMath::Clamp(FMath::FInterpTo(LevelCourse->SequenceController->SequencePlayer->GetPlayRate(), DesirePlayRate, DeltaSeconds, SpeedChangeRate), MinSpeed, MaxSpeed);
+		FinalPlayRate = FMath::FInterpTo(FinalPlayRate, 1.0f, DeltaSeconds, SpeedRecoveryRate);
+		LevelCourse->SequenceController->SequencePlayer->SetPlayRate(FinalPlayRate);
 
 		// Calculate the rotation according to the input
 		FRotator DesireRotation = GetActorRotation();
-		DesireRotation.Yaw += RightInput * 10.0f;
+		DesireRotation.Yaw += RightInput * MovementRotationDegrees;
 		if (DoingBarrelRoll)
 		{
 			DesireRotation.Roll = DoingLeftBarrelRoll ? DesireRotation.Roll - 45.0f : DoingRightBarrelRoll ? DesireRotation.Roll + 45.0f : DesireRotation.Roll;
 		}
 		else
 		{
-			DesireRotation.Roll = RightTiltPressed ? 90.0f : DesireRotation.Roll + RightInput * 10.0f;
-			DesireRotation.Roll = LeftTiltPressed ? -90.0f : DesireRotation.Roll + RightInput * 10.0f;
+			DesireRotation.Roll = RightTiltPressed ? 90.0f : DesireRotation.Roll + RightInput * MovementRotationDegrees;
+			DesireRotation.Roll = LeftTiltPressed ? -90.0f : DesireRotation.Roll + RightInput * MovementRotationDegrees;
 		}
-		DesireRotation.Pitch += UpInput * 10.0f;
-		float RotationSpeed = DoingBarrelRoll ? 20.0f : 10.0f;
+		DesireRotation.Pitch += UpInput * MovementRotationDegrees;
+		float RotationSpeed = DoingBarrelRoll ? RotChangeBarrellRollRate : RotChangeRate;
 		FRotator FinalRotation = FMath::RInterpTo(GetActorRotation(), DesireRotation, DeltaSeconds, RotationSpeed);
-		FinalRotation = FMath::RInterpTo(FinalRotation, LevelCourse->GetActorRotation(), DeltaSeconds, 2.5f);
+		FinalRotation = FMath::RInterpTo(FinalRotation, LevelCourse->GetActorRotation(), DeltaSeconds, RotationRecoveryRate);
 
 		//Calculate the position according to the rotation
 		FVector FinalForwardDirection = FinalRotation.Vector();
-		FVector FinalLocation = FMath::LinePlaneIntersection(GetActorLocation(), GetActorLocation() + FinalForwardDirection * 100.0f, LevelCourse->GetActorLocation(), LevelCourse->GetActorRotation().Vector());
+		FVector FinalLocation = FMath::LinePlaneIntersection(GetActorLocation(), GetActorLocation() + FinalForwardDirection * MovRefPointDistance, LevelCourse->GetActorLocation(), LevelCourse->GetActorRotation().Vector());
 
 		FVector PositionOffset = LevelCourse->GetActorLocation() - FinalLocation;
-		if (PositionOffset.X > 1000.0f)
+		if (PositionOffset.X > RightMovementLimit)
 		{
-			PositionOffset.X = 1000.0f;
+			PositionOffset.X = RightMovementLimit;
 		}
 
-		if (PositionOffset.X < -1000.0f)
+		if (PositionOffset.X < LeftMovementLimit)
 		{
-			PositionOffset.X = -1000.0f;
+			PositionOffset.X = LeftMovementLimit;
 		}
 
-		if (PositionOffset.Z > 500.0f)
+		if (PositionOffset.Z > UpMovementLimit)
 		{
-			PositionOffset.Z = 500.0f;
+			PositionOffset.Z = UpMovementLimit;
 		}
 
-		if (PositionOffset.Z < -500.0f)
+		if (PositionOffset.Z < DownMovementLimit)
 		{
-			PositionOffset.Z = -500.0f;
+			PositionOffset.Z = DownMovementLimit;
 		}
 
 		FinalLocation = LevelCourse->GetActorLocation() - PositionOffset;
@@ -139,16 +168,16 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 		SetActorRotation(FinalRotation);
 
 		FVector FinalSocketOffset = FVector::ZeroVector;
-		FinalSocketOffset.Z = -PositionOffset.Z * 0.75f;
-		FinalSocketOffset.Y = PositionOffset.X * 0.75f;
+		FinalSocketOffset.Z = -PositionOffset.Z * VerticalCameraDisplacement;
+		FinalSocketOffset.Y = PositionOffset.X * HorizontalCameraDisplacement;
 
-		SpringArm->SocketOffset = FMath::VInterpTo(SpringArm->SocketOffset, FinalSocketOffset, DeltaSeconds, 10.0f);
+		SpringArm->SocketOffset = FMath::VInterpTo(SpringArm->SocketOffset, FinalSocketOffset, DeltaSeconds, CamMovementRate);
 		FRotator FinalCameraRotation = Camera->RelativeRotation;
-		FinalCameraRotation.Roll += RightInput * 0.5f;
-		FinalCameraRotation = FMath::RInterpTo(FinalCameraRotation, FRotator::ZeroRotator, DeltaSeconds, 10.0f);
-		Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FinalCameraRotation, DeltaSeconds, 10.0f));
+		FinalCameraRotation.Roll += RightInput * CamRotationDegrees;
+		FinalCameraRotation = FMath::RInterpTo(FinalCameraRotation, FRotator::ZeroRotator, DeltaSeconds, CamRotationRecoveryRate);
+		Camera->SetRelativeRotation(FMath::RInterpTo(Camera->RelativeRotation, FinalCameraRotation, DeltaSeconds, CamRotationRate));
 
-		AimPointLocation = GetActorLocation() + (GetActorRotation().Vector() * 5000.0f);
+		AimPointLocation = GetActorLocation() + (GetActorRotation().Vector() * AimPointDistance);
 
 		PreviousLocation = GetActorLocation();
 	}
@@ -338,7 +367,7 @@ void ALylatDragoonPawn::FireInput()
 
 void ALylatDragoonPawn::Die()
 {
-	LevelCourse->MatineeController->SetPosition(0.0f, true);
+	LevelCourse->SequenceController->SequencePlayer->SetPlaybackPosition(0.0f);
 	CurrentHealth = MaxHealth;
 }
 
