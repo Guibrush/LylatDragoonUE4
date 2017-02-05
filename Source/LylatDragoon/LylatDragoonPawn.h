@@ -4,7 +4,7 @@
 #include "LylatDragoonPawn.generated.h"
 
 UCLASS(config=Game)
-class ALylatDragoonPawn : public APawn
+class LYLATDRAGOON_API ALylatDragoonPawn : public APawn
 {
 	GENERATED_BODY()
 

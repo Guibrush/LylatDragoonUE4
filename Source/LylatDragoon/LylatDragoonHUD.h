@@ -9,7 +9,7 @@
  * 
  */
 UCLASS()
-class ALylatDragoonHUD : public AHUD
+class LYLATDRAGOON_API ALylatDragoonHUD : public AHUD
 {
 	GENERATED_BODY()
 

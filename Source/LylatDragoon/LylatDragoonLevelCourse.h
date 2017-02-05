@@ -6,7 +6,7 @@
 #include "LylatDragoonLevelCourse.generated.h"
 
 UCLASS()
-class ALylatDragoonLevelCourse : public AActor
+class LYLATDRAGOON_API ALylatDragoonLevelCourse : public AActor
 {
 	GENERATED_BODY()
 	

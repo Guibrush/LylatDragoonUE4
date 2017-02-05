@@ -6,7 +6,7 @@
 #include "LylatDragoonProjectile.generated.h"
 
 UCLASS()
-class ALylatDragoonProjectile : public AActor
+class LYLATDRAGOON_API ALylatDragoonProjectile : public AActor
 {
 	GENERATED_BODY()
 	

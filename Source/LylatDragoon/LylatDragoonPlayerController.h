@@ -9,7 +9,7 @@
  * 
  */
 UCLASS()
-class ALylatDragoonPlayerController : public APlayerController
+class LYLATDRAGOON_API ALylatDragoonPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	

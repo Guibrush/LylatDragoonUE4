@@ -9,7 +9,7 @@
  * 
  */
 UCLASS()
-class ALylatDragoonStaticMeshActor : public AStaticMeshActor
+class LYLATDRAGOON_API ALylatDragoonStaticMeshActor : public AStaticMeshActor
 {
 	GENERATED_BODY()
 	
