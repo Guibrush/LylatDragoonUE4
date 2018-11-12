@@ -7,7 +7,6 @@
 #include "LylatDragoonPlayerController.h"
 #include "LylatDragoonProjectile.h"
 
-#include "Matinee/MatineeActor.h"
 #include "LevelSequenceActor.h"
 
 #include "EngineUtils.h"
@@ -87,6 +86,9 @@ ALylatDragoonPawn::ALylatDragoonPawn(const FObjectInitializer& ObjectInitializer
 
 void ALylatDragoonPawn::Tick(float DeltaSeconds)
 {
+	// Call any parent class Tick implementation
+	Super::Tick(DeltaSeconds);
+
 	ALylatDragoonPlayerController* LylatController = Cast<ALylatDragoonPlayerController>(Controller);
 	if (LevelCourse && LylatController)
 	{
@@ -181,9 +183,6 @@ void ALylatDragoonPawn::Tick(float DeltaSeconds)
 
 		PreviousLocation = GetActorLocation();
 	}
-
-	// Call any parent class Tick implementation
-	Super::Tick(DeltaSeconds);
 }
 
 void ALylatDragoonPawn::PostInitializeComponents()

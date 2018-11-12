@@ -5,21 +5,9 @@ using System.Collections.Generic;
 
 public class LylatDragoonTarget : TargetRules
 {
-	public LylatDragoonTarget(TargetInfo Target)
+	public LylatDragoonTarget(TargetInfo Target) : base (Target)
 	{
 		Type = TargetType.Game;
-	}
-
-	//
-	// TargetRules interface.
-	//
-
-	public override void SetupBinaries(
-		TargetInfo Target,
-		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
-		ref List<string> OutExtraModuleNames
-		)
-	{
-		OutExtraModuleNames.Add("LylatDragoon");
-	}
+        ExtraModuleNames.Add("LylatDragoon");
+    }
 }

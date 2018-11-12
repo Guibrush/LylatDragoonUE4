@@ -42,9 +42,8 @@ void ALylatDragoonEnemy::Tick( float DeltaTime )
 }
 
 // Called to bind functionality to input
-void ALylatDragoonEnemy::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void ALylatDragoonEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(InputComponent);
-
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
